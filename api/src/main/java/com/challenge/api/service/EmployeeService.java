@@ -1,5 +1,7 @@
 package com.challenge.api.service;
 
+import com.challenge.api.exception.EmployeeNotFoundException;
+import com.challenge.api.exception.InvalidEmployeeException;
 import com.challenge.api.model.CreateEmployeeRequest;
 import com.challenge.api.model.Employee;
 import com.challenge.api.model.EmployeeImpl;
@@ -34,19 +36,19 @@ public class EmployeeService {
         return all;
     }
 
-    public Employee getByUuid(UUID uuid) throws Exception {
+    public Employee getByUuid(UUID uuid) {
         Employee employee = employees.get(uuid);
         if (employee == null) {
-            throw new Exception("Employee not found for UUID: " + uuid);
+            throw new EmployeeNotFoundException(uuid);
         }
         return employee;
     }
 
-    public Employee create(CreateEmployeeRequest request) throws Exception {
+    public Employee create(CreateEmployeeRequest request) {
         List<String> errors = validate(request);
         if (!errors.isEmpty()) {
             log.warn("Rejected employee creation: {}", errors);
-            throw new Exception("Invalid employee creation request: " + errors);
+            throw new InvalidEmployeeException(errors);
         }
         Employee employee = store(request);
         log.info("Created employee {}", employee.getUuid());
@@ -76,15 +78,15 @@ public class EmployeeService {
             return errors;
         }
 
-        if(request.getFirstName() == null || request.getFirstName().trim().isEmpty()) {
+        if (request.getFirstName() == null || request.getFirstName().trim().isEmpty()) {
             errors.add("firstName is required");
         }
-        
-        if(request.getLastName() == null || request.getLastName().trim().isEmpty()) {
+
+        if (request.getLastName() == null || request.getLastName().trim().isEmpty()) {
             errors.add("lastName is required");
         }
-        
-        if(request.getJobTitle() == null || request.getJobTitle().trim().isEmpty()) {
+
+        if (request.getJobTitle() == null || request.getJobTitle().trim().isEmpty()) {
             errors.add("jobTitle is required");
         }
 
@@ -122,13 +124,7 @@ public class EmployeeService {
     }
 
     private void seed(
-            String firstName,
-            String lastName,
-            int salary,
-            int age,
-            String jobTitle,
-            String email,
-            String hireDate) {
+            String firstName, String lastName, int salary, int age, String jobTitle, String email, String hireDate) {
         CreateEmployeeRequest request = new CreateEmployeeRequest();
         request.setFirstName(firstName);
         request.setLastName(lastName);
