@@ -33,6 +33,7 @@ public class EmployeeService {
     public List<Employee> getAll() {
         List<Employee> all = new ArrayList<>(employees.values());
         all.sort(Comparator.comparing(Employee::getFullName));
+        log.debug("Retrieved {} employees", all.size());
         return all;
     }
 
@@ -41,6 +42,7 @@ public class EmployeeService {
         if (employee == null) {
             throw new EmployeeNotFoundException(uuid);
         }
+        log.debug("Retrieved employee {}", uuid);
         return employee;
     }
 
@@ -118,13 +120,28 @@ public class EmployeeService {
     }
 
     private void seedMockEmployees() {
-        seed("Ada", "Lovelace", 120000, 36, "Staff Engineer", "ada.lovelace@example.com", "2022-03-01T00:00:00Z");
-        seed("Grace", "Hopper", 135000, 45, "Engineering Manager", "grace.hopper@example.com", "2020-07-15T00:00:00Z");
-        seed("Alan", "Turing", 110000, 41, "Security Analyst", "alan.turing@example.com", "2023-01-09T00:00:00Z");
+        seed("Ada", "Lovelace", 120000, 36, "Staff Engineer", "ada.lovelace@example.com", "2022-03-01T00:00:00Z", null);
+        seed(
+                "Grace",
+                "Hopper",
+                135000,
+                45,
+                "Engineering Manager",
+                "grace.hopper@example.com",
+                "2020-07-15T00:00:00Z",
+                "2024-12-31T00:00:00Z");
+        seed("Alan", "Turing", 110000, 41, "Security Analyst", "alan.turing@example.com", "2023-01-09T00:00:00Z", null);
     }
 
     private void seed(
-            String firstName, String lastName, int salary, int age, String jobTitle, String email, String hireDate) {
+            String firstName,
+            String lastName,
+            int salary,
+            int age,
+            String jobTitle,
+            String email,
+            String hireDate,
+            String terminationDate) {
         CreateEmployeeRequest request = new CreateEmployeeRequest();
         request.setFirstName(firstName);
         request.setLastName(lastName);
@@ -133,6 +150,9 @@ public class EmployeeService {
         request.setJobTitle(jobTitle);
         request.setEmail(email);
         request.setContractHireDate(Instant.parse(hireDate));
+        if (terminationDate != null) {
+            request.setContractTerminationDate(Instant.parse(terminationDate));
+        }
         store(request);
     }
 }
