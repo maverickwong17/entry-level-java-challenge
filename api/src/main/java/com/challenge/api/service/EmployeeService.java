@@ -1,20 +1,25 @@
 package com.challenge.api.service;
 
-import com.challenge.api.exception.EmployeeNotFoundException;
-import com.challenge.api.exception.InvalidEmployeeException;
-import com.challenge.api.model.CreateEmployeeRequest;
-import com.challenge.api.model.Employee;
-import com.challenge.api.model.EmployeeImpl;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
-import lombok.extern.slf4j.Slf4j;
+import java.util.stream.Stream;
+
 import org.springframework.stereotype.Service;
+
+import com.challenge.api.exception.EmployeeNotFoundException;
+import com.challenge.api.exception.InvalidEmployeeException;
+import com.challenge.api.model.EmployeeRequestBody;
+import com.challenge.api.model.Employee;
+import com.challenge.api.model.EmployeeImpl;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -46,7 +51,7 @@ public class EmployeeService {
         return employee;
     }
 
-    public Employee create(CreateEmployeeRequest request) {
+    public Employee create(EmployeeRequestBody request) {
         List<String> errors = validate(request);
         if (!errors.isEmpty()) {
             log.warn("Rejected employee creation: {}", errors);
@@ -57,9 +62,64 @@ public class EmployeeService {
         return employee;
     }
 
-    private Employee store(CreateEmployeeRequest request) {
+    public Employee update(UUID uuid, EmployeeRequestBody request) {
+        Employee updated = employees.computeIfPresent(uuid, (id, current) -> applyUpdate(current, request));
+        if (updated == null) {
+            throw new EmployeeNotFoundException(uuid);
+        }
+        log.info("Updated employee {}", uuid);
+        return updated;
+    }
+
+    private Employee applyUpdate(Employee current, EmployeeRequestBody update) {
+        if (update == null || hasNoFields(update)) {
+            throw new InvalidEmployeeException(List.of("at least one field must be provided"));
+        }
+        EmployeeRequestBody merged = new EmployeeRequestBody();
+        merged.setFirstName(coalesce(update.getFirstName(), current.getFirstName()));
+        merged.setLastName(coalesce(update.getLastName(), current.getLastName()));
+        merged.setSalary(coalesce(update.getSalary(), current.getSalary()));
+        merged.setAge(coalesce(update.getAge(), current.getAge()));
+        merged.setJobTitle(coalesce(update.getJobTitle(), current.getJobTitle()));
+        merged.setEmail(coalesce(update.getEmail(), current.getEmail()));
+        merged.setContractHireDate(coalesce(update.getContractHireDate(), current.getContractHireDate()));
+        merged.setContractTerminationDate(
+                coalesce(update.getContractTerminationDate(), current.getContractTerminationDate()));
+
+        List<String> errors = validate(merged);
+        if (!errors.isEmpty()) {
+            log.warn("Rejected update of employee {}: {}", current.getUuid(), errors);
+            throw new InvalidEmployeeException(errors);
+        }
+        return build(current.getUuid(), merged);
+    }
+
+    private boolean hasNoFields(EmployeeRequestBody update) {
+        return Stream.of(
+                    update.getFirstName(),
+                    update.getLastName(),
+                    update.getSalary(),
+                    update.getAge(),
+                    update.getJobTitle(),
+                    update.getEmail(),
+                    update.getContractHireDate(),
+                    update.getContractTerminationDate())
+            .allMatch(Objects::isNull);
+    }
+
+    private <T> T coalesce(T value, T fallback) {
+        return value != null ? value : fallback;
+    }
+
+    private Employee store(EmployeeRequestBody request) {
+        EmployeeImpl employee = build(UUID.randomUUID(), request);
+        employees.put(employee.getUuid(), employee);
+        return employee;
+    }
+
+    private EmployeeImpl build(UUID uuid, EmployeeRequestBody request) {
         EmployeeImpl employee = new EmployeeImpl();
-        employee.setUuid(UUID.randomUUID());
+        employee.setUuid(uuid);
         employee.setFirstName(request.getFirstName().trim());
         employee.setLastName(request.getLastName().trim());
         employee.setFullName(employee.getFirstName() + " " + employee.getLastName());
@@ -69,11 +129,10 @@ public class EmployeeService {
         employee.setEmail(request.getEmail().trim());
         employee.setContractHireDate(request.getContractHireDate());
         employee.setContractTerminationDate(request.getContractTerminationDate());
-        employees.put(employee.getUuid(), employee);
         return employee;
     }
 
-    private List<String> validate(CreateEmployeeRequest request) {
+    private List<String> validate(EmployeeRequestBody request) {
         List<String> errors = new ArrayList<>();
         if (request == null) {
             errors.add("request body is required");
@@ -142,7 +201,7 @@ public class EmployeeService {
             String email,
             String hireDate,
             String terminationDate) {
-        CreateEmployeeRequest request = new CreateEmployeeRequest();
+        EmployeeRequestBody request = new EmployeeRequestBody();
         request.setFirstName(firstName);
         request.setLastName(lastName);
         request.setSalary(salary);

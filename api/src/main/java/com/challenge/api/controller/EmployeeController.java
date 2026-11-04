@@ -1,6 +1,6 @@
 package com.challenge.api.controller;
 
-import com.challenge.api.model.CreateEmployeeRequest;
+import com.challenge.api.model.EmployeeRequestBody;
 import com.challenge.api.model.Employee;
 import com.challenge.api.service.EmployeeService;
 import java.net.URI;
@@ -9,6 +9,8 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -39,7 +41,7 @@ public class EmployeeController {
      * @return Requested Employee if exists
      */
     @GetMapping("/{uuid}")
-    public Employee getEmployeeByUuid(UUID uuid) {
+    public Employee getEmployeeByUuid(@PathVariable("uuid") UUID uuid) {
         return employeeService.getByUuid(uuid);
     }
 
@@ -49,12 +51,18 @@ public class EmployeeController {
      * @return Newly created Employee
      */
     @PostMapping
-    public ResponseEntity<Employee> createEmployee(@RequestBody CreateEmployeeRequest requestBody) {
+    public ResponseEntity<Employee> createEmployee(@RequestBody EmployeeRequestBody requestBody) {
         Employee created = employeeService.create(requestBody);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{uuid}")
                 .buildAndExpand(created.getUuid())
                 .toUri();
         return ResponseEntity.created(location).body(created);
+    }
+
+    @PatchMapping("/{uuid}")
+    public Employee updateEmployee(
+            @PathVariable("uuid") UUID uuid, @RequestBody EmployeeRequestBody requestBody) {
+        return employeeService.update(uuid, requestBody);
     }
 }

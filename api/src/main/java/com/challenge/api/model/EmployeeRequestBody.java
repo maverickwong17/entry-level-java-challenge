@@ -4,7 +4,7 @@ import java.time.Instant;
 import lombok.Data;
 
 @Data
-public class CreateEmployeeRequest {
+public class EmployeeRequestBody {
 
     private String firstName;
     private String lastName;
