@@ -1,4 +1,4 @@
-package com.challenge.api.controller;
+package com.challenge.api;
 
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 
 import java.net.URI;
 import java.util.UUID;
@@ -116,5 +117,73 @@ class EmployeeControllerTest {
     @Test
     void getReturns400ForMalformedUuid() throws Exception {
         mockMvc.perform(get(BASE_URL + "/not-a-uuid")).andExpect(status().isBadRequest());
+    }
+    
+    @Test
+    void patchUpdatesEmployeeAndPersistsChange() throws Exception {
+        String location = createEmployeeAndGetLocation();
+
+        mockMvc.perform(patch(URI.create(location))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"jobTitle\": \"Senior Mathematician\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.jobTitle").value("Senior Mathematician"))
+                .andExpect(jsonPath("$.email").value("katherine.johnson@example.com"));
+
+        mockMvc.perform(get(URI.create(location)))
+                .andExpect(jsonPath("$.jobTitle").value("Senior Mathematician"));
+    }
+
+    @Test
+    void patchSetsTerminationDate() throws Exception {
+        String location = createEmployeeAndGetLocation();
+
+        mockMvc.perform(patch(URI.create(location))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"contractTerminationDate\": \"2025-06-30T00:00:00Z\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.contractTerminationDate").value("2025-06-30T00:00:00Z"));
+    }
+
+    @Test
+    void patchRejectsEmptyObject() throws Exception {
+        String location = createEmployeeAndGetLocation();
+
+        mockMvc.perform(patch(URI.create(location)).contentType(MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void patchRejectsInvalidValues() throws Exception {
+        String location = createEmployeeAndGetLocation();
+
+        mockMvc.perform(patch(URI.create(location))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"contractTerminationDate\": \"2024-01-01T00:00:00Z\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors", hasSize(1)));
+    }
+
+    @Test
+    void patchReturns404ForUnknownUuid() throws Exception {
+        mockMvc.perform(patch(BASE_URL + "/" + UUID.randomUUID())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"jobTitle\": \"Anything\"}"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void patchReturns400ForMalformedUuid() throws Exception {
+        mockMvc.perform(patch(BASE_URL + "/not-a-uuid")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"jobTitle\": \"Anything\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    private String createEmployeeAndGetLocation() throws Exception {
+        return mockMvc.perform(post(BASE_URL).contentType(MediaType.APPLICATION_JSON).content(VALID_BODY))
+                .andReturn()
+                .getResponse()
+                .getHeader("Location");
     }
 }
