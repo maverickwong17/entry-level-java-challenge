@@ -4,11 +4,11 @@ import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 
 import java.net.URI;
 import java.util.UUID;
@@ -118,7 +118,7 @@ class EmployeeControllerTest {
     void getReturns400ForMalformedUuid() throws Exception {
         mockMvc.perform(get(BASE_URL + "/not-a-uuid")).andExpect(status().isBadRequest());
     }
-    
+
     @Test
     void patchUpdatesEmployeeAndPersistsChange() throws Exception {
         String location = createEmployeeAndGetLocation();
@@ -149,7 +149,9 @@ class EmployeeControllerTest {
     void patchRejectsEmptyObject() throws Exception {
         String location = createEmployeeAndGetLocation();
 
-        mockMvc.perform(patch(URI.create(location)).contentType(MediaType.APPLICATION_JSON).content("{}"))
+        mockMvc.perform(patch(URI.create(location))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -181,7 +183,8 @@ class EmployeeControllerTest {
     }
 
     private String createEmployeeAndGetLocation() throws Exception {
-        return mockMvc.perform(post(BASE_URL).contentType(MediaType.APPLICATION_JSON).content(VALID_BODY))
+        return mockMvc.perform(
+                        post(BASE_URL).contentType(MediaType.APPLICATION_JSON).content(VALID_BODY))
                 .andReturn()
                 .getResponse()
                 .getHeader("Location");

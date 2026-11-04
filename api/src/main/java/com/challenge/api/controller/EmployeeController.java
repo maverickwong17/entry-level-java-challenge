@@ -1,7 +1,7 @@
 package com.challenge.api.controller;
 
-import com.challenge.api.model.EmployeeRequestBody;
 import com.challenge.api.model.Employee;
+import com.challenge.api.model.EmployeeRequestBody;
 import com.challenge.api.service.EmployeeService;
 import java.net.URI;
 import java.util.List;
@@ -61,8 +61,7 @@ public class EmployeeController {
     }
 
     @PatchMapping("/{uuid}")
-    public Employee updateEmployee(
-            @PathVariable("uuid") UUID uuid, @RequestBody EmployeeRequestBody requestBody) {
+    public Employee updateEmployee(@PathVariable("uuid") UUID uuid, @RequestBody EmployeeRequestBody requestBody) {
         return employeeService.update(uuid, requestBody);
     }
 }

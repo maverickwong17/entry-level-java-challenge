@@ -1,5 +1,10 @@
 package com.challenge.api.service;
 
+import com.challenge.api.exception.EmployeeNotFoundException;
+import com.challenge.api.exception.InvalidEmployeeException;
+import com.challenge.api.model.Employee;
+import com.challenge.api.model.EmployeeImpl;
+import com.challenge.api.model.EmployeeRequestBody;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -10,16 +15,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
-
-import org.springframework.stereotype.Service;
-
-import com.challenge.api.exception.EmployeeNotFoundException;
-import com.challenge.api.exception.InvalidEmployeeException;
-import com.challenge.api.model.EmployeeRequestBody;
-import com.challenge.api.model.Employee;
-import com.challenge.api.model.EmployeeImpl;
-
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
@@ -96,15 +93,15 @@ public class EmployeeService {
 
     private boolean hasNoFields(EmployeeRequestBody update) {
         return Stream.of(
-                    update.getFirstName(),
-                    update.getLastName(),
-                    update.getSalary(),
-                    update.getAge(),
-                    update.getJobTitle(),
-                    update.getEmail(),
-                    update.getContractHireDate(),
-                    update.getContractTerminationDate())
-            .allMatch(Objects::isNull);
+                        update.getFirstName(),
+                        update.getLastName(),
+                        update.getSalary(),
+                        update.getAge(),
+                        update.getJobTitle(),
+                        update.getEmail(),
+                        update.getContractHireDate(),
+                        update.getContractTerminationDate())
+                .allMatch(Objects::isNull);
     }
 
     private <T> T coalesce(T value, T fallback) {

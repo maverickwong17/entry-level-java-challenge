@@ -5,10 +5,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.challenge.api.exception.EmployeeNotFoundException;
 import com.challenge.api.exception.InvalidEmployeeException;
-import com.challenge.api.model.EmployeeRequestBody;
 import com.challenge.api.model.Employee;
+import com.challenge.api.model.EmployeeRequestBody;
 import com.challenge.api.service.EmployeeService;
-
 import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
